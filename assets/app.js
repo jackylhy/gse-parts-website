@@ -232,8 +232,8 @@ const MODELS = [
 
 /* cat: category id · cond: new|svc|oh · price: number|null(RFQ) · stock: qty (0=out, ≤4 low) · img: optional real photo (assets/parts/…) */
 const PARTS = [
-  {pn:"TR-1142L", nm:"Tie rod end, left-hand thread (with nut & cotter pin)", cat:"tow", cond:"new", price:null, stock:1, fits:["Toyota 2TD20","Toyota 2TD25"], img:"assets/parts/TR-1142-tie-rod-end.jpg"},
-  {pn:"TR-1142R", nm:"Tie rod end, right-hand thread (with nut & cotter pin)", cat:"tow", cond:"new", price:null, stock:1, fits:["Toyota 2TD20","Toyota 2TD25"], img:"assets/parts/TR-1142-tie-rod-end.jpg"},
+  {pn:"TR-1142L", nm:"Tie rod end, left-hand thread (with nut & cotter pin)", cat:"tow", cond:"new", price:null, stock:1, fits:["Toyota 2TD20","Toyota 2TD25"], img:"assets/parts/TR-1142L-tie-rod-end.jpg"},
+  {pn:"TR-1142R", nm:"Tie rod end, right-hand thread (with nut & cotter pin)", cat:"tow", cond:"new", price:null, stock:1, fits:["Toyota 2TD20","Toyota 2TD25"], img:"assets/parts/TR-1142R-tie-rod-end.jpg"},
   {pn:"TL-4812-201", nm:"Steering cylinder seal kit", cat:"tow", cond:"svc", price:128, stock:14, fits:["TLD TMX","Goldhofer AST-2"]},
   {pn:"TL-3300-017", nm:"Tow hook assembly", cat:"tow", cond:"new", price:860, stock:5, fits:["TLD TMX","TUG 660"]},
   {pn:"TL-9214-B", nm:"5th wheel coupling plate", cat:"tow", cond:"new", price:1240, stock:3, fits:["Goldhofer TPS-350"]},
