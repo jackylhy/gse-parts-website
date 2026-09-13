@@ -226,12 +226,14 @@ const MODELS = [
   {oem:"Global GSE", m:"De-icer 3000", ty:"De-icing truck"},
   {oem:"AeroLav Group", m:"LS-2", ty:"Lavatory service truck"},
   {oem:"Kalmar", m:"T2", ty:"Ground forklift"},
+  {oem:"Toyota", m:"2TD20", ty:"Baggage tow tractor"},
   {oem:"Toyota", m:"2TD25", ty:"Baggage tow tractor"}
 ];
 
 /* cat: category id · cond: new|svc|oh · price: number|null(RFQ) · stock: qty (0=out, ≤4 low) · img: optional real photo (assets/parts/…) */
 const PARTS = [
-  {pn:"TR-1142", nm:"Tie rod end assembly (with nut & cotter pin)", cat:"tow", cond:"new", price:145, stock:6, fits:["Toyota 2TD25"], img:"assets/parts/TR-1142-tie-rod-end.jpg"},
+  {pn:"TR-1142L", nm:"Tie rod end, left-hand thread (with nut & cotter pin)", cat:"tow", cond:"new", price:null, stock:1, fits:["Toyota 2TD20","Toyota 2TD25"], img:"assets/parts/TR-1142-tie-rod-end.jpg"},
+  {pn:"TR-1142R", nm:"Tie rod end, right-hand thread (with nut & cotter pin)", cat:"tow", cond:"new", price:null, stock:1, fits:["Toyota 2TD20","Toyota 2TD25"], img:"assets/parts/TR-1142-tie-rod-end.jpg"},
   {pn:"TL-4812-201", nm:"Steering cylinder seal kit", cat:"tow", cond:"svc", price:128, stock:14, fits:["TLD TMX","Goldhofer AST-2"]},
   {pn:"TL-3300-017", nm:"Tow hook assembly", cat:"tow", cond:"new", price:860, stock:5, fits:["TLD TMX","TUG 660"]},
   {pn:"TL-9214-B", nm:"5th wheel coupling plate", cat:"tow", cond:"new", price:1240, stock:3, fits:["Goldhofer TPS-350"]},
@@ -285,6 +287,9 @@ const XREF = [
   {oem:"Mallaghan", oemPn:"MT-PUL-2",ourPn:"TX-4415-C"},
   {oem:"Houchin", oemPn:"4400-RLY",  ourPn:"GP-400-110"},
   {oem:"TUG",     oemPn:"MA50-CTR",  ourPn:"GP-400-224"},
+  {oem:"Toyota",  oemPn:"43760-30871-71", ourPn:"TR-1142L"},
+  {oem:"Toyota",  oemPn:"33506-41833-71", ourPn:"TR-1142L"},
+  {oem:"Toyota",  oemPn:"45660-20541-71", ourPn:"TR-1142R"},
   {oem:"Baldwin", oemPn:"815111",    ourPn:"AS-FILT-12"},
   {oem:"TLD",     oemPn:"ASU-VN33",  ourPn:"AS-VANE-33"},
   {oem:"Kalmar",  oemPn:"T2-CHN-84", ourPn:"LD-CHN-84"},
@@ -819,7 +824,8 @@ const XREF_ALIAS = {
   "DOUGLAS":"Douglas", "MALLAGHAN":"Mallaghan", "HOUCHIN":"Houchin",
   "TUG":"TUG", "BAL":"Baldwin", "BALDWIN":"Baldwin", "KALMAR":"Kalmar",
   "DOLL":"DOLL", "GLOBAL":"Global GSE", "AEROLAV":"AeroLav",
-  "MICHELIN":"Michelin", "JBT":"JBT AeroTech", "ITW":"ITW GSE"
+  "MICHELIN":"Michelin", "JBT":"JBT AeroTech", "ITW":"ITW GSE",
+  "TOYOTA":"Toyota"
 };
 
 /* normalize any PN string: uppercase, strip spaces/hyphens */

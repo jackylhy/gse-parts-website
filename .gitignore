@@ -1,0 +1,4 @@
+# Internal business data — never publish
+internal-pricing*.md
+*.internal.md
+.env
