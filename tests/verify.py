@@ -30,9 +30,9 @@ with sync_playwright() as pw:
     # 1. boot integrity
     record("hero title renders", page.text_content(".hero-title").strip() == "Keep your ramp moving.")
     record("10 category cards", page.locator(".cat-card").count() == 10, str(page.locator(".cat-card").count()))
-    record("18 model cards", page.locator(".model-card").count() == 18, str(page.locator(".model-card").count()))
-    record("30 part cards in catalog", page.locator("#partGrid .part-card").count() == 30, str(page.locator("#partGrid .part-card").count()))
-    record("result count text", "30" in page.text_content("#resultCount"))
+    record("20 model cards", page.locator(".model-card").count() == 20, str(page.locator(".model-card").count()))
+    record("32 part cards in catalog", page.locator("#partGrid .part-card").count() == 32, str(page.locator("#partGrid .part-card").count()))
+    record("result count text", "32" in page.text_content("#resultCount"))
     record("no page errors", not page_errors, "; ".join(page_errors[:3]))
     record("no console errors", not console_errors, "; ".join(console_errors[:3]))
 
@@ -75,10 +75,10 @@ with sync_playwright() as pw:
     banner_visible = page.locator("#modelBanner").is_visible()
     banner_text = page.text_content("#modelBannerText")
     n_filtered = page.locator("#partGrid .part-card").count()
-    record("model filter banner + filtered parts", banner_visible and 0 < n_filtered < 30, f"banner={banner_text!r}, n={n_filtered}")
+    record("model filter banner + filtered parts", banner_visible and 0 < n_filtered < 32, f"banner={banner_text!r}, n={n_filtered}")
     page.click("#modelClear")
     time.sleep(0.2)
-    record("model filter clears back to 30", page.locator("#partGrid .part-card").count() == 30)
+    record("model filter clears back to 32", page.locator("#partGrid .part-card").count() == 32)
 
     # 6. category card → catalog filter
     page.click(".cat-card >> nth=0")
@@ -143,7 +143,7 @@ with sync_playwright() as pw:
     zh_title = page.text_content(".hero-title").strip()
     record("zh switch — hero translated", zh_title == "讓停機坪不停擺。", zh_title)
     zh_count = page.text_content("#resultCount")
-    record("zh switch — result count localized", "30" in zh_count, zh_count)
+    record("zh switch — result count localized", "32" in zh_count, zh_count)
     part_name_zh = page.text_content("#partGrid .part-card >> nth=0 >> .part-name")
     record("zh part names localized (sample data EN kept)", isinstance(part_name_zh, str))
     page.click(".lang-btn[data-lang=en]")
@@ -158,12 +158,42 @@ with sync_playwright() as pw:
     err_email = page.text_content("#eEmail")
     record("form rejects bad email", err_email != "", err_email)
     record("form still visible on error", page.locator("#rfqForm").is_visible())
+
+    # 12b. mock the FormSubmit endpoint (no real network in tests)
+    sent = []
+    def ok_formsubmit(route):
+        sent.append(route.request.post_data or "")
+        route.fulfill(status=200, content_type="application/json", body='{"success":"true","message":"ok"}')
+    def fail_formsubmit(route):
+        route.fulfill(status=500, content_type="application/json", body='{"success":"false","message":"err"}')
+    ROUTE = "**/formsubmit.co/ajax/**"
+    page.route(ROUTE, fail_formsubmit)  # failure path first
+
     page.fill("#cName", "Test User")
     page.fill("#cEmail", "test@example.com")
     page.fill("#cMsg", "TL-4812-201 x2")
     page.click("#rfqForm button[type=submit]")
-    time.sleep(0.2)
+    time.sleep(0.5)
+    err_send = page.text_content("#eMsg")
+    record("send failure shows error message", err_send != "", err_send)
+    record("form stays visible on send failure", page.locator("#rfqForm").is_visible())
+
+    # 12c. honeypot silently drops bots (no request, no success panel)
+    page.unroute(ROUTE)
+    page.route(ROUTE, ok_formsubmit)
+    n_sent = len(sent)
+    page.fill("#fHoney", "i-am-a-bot")
+    page.click("#rfqForm button[type=submit]")
+    time.sleep(0.4)
+    record("honeypot silently drops bot submission", len(sent) == n_sent and page.locator("#formOk").is_hidden())
+    page.fill("#fHoney", "")
+
+    # 12d. success path — payload reaches email endpoint, success panel shows
+    page.click("#rfqForm button[type=submit]")
+    time.sleep(0.6)
     record("valid form shows success panel", page.locator("#formOk").is_visible())
+    record("RFQ payload posted to email endpoint", len(sent) >= 1 and "Test User" in sent[-1], (sent[-1] or "")[:120])
+    record("RFQ list field included in payload", "rfq_items" in " ".join(sent))
 
     # 13. XSS canary: part search field renders as text, never HTML
     page.fill("#catSearch", '<img src=x onerror="window.__xss=1">')

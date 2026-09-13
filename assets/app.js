@@ -73,10 +73,11 @@ const I18N = {
     "rfq-sub":"Tell us the part numbers or the equipment — we reply within one business day, AOG immediately.",
     "f-name":"Name *","f-company":"Company","f-email":"Email *","f-phone":"Phone",
     "f-msg":"Part numbers / equipment *","f-send":"Submit RFQ",
-    "f-note":"Demo form — no data leaves your browser. Connect it to your email endpoint in production.",
+    "f-note":"We reply within one business day — AOG enquiries get priority.",
     "f-ok-t":"RFQ received",
-    "f-ok-d":"Thank you — this is a demo, so nothing was sent. In production our sales team replies within one business day.",
+    "f-ok-d":"Thank you — our sales team has received your enquiry and will reply within one business day (AOG immediately).",
     "f-err-name":"Please tell us your name.","f-err-email":"Please enter a valid email address.","f-err-msg":"Please list at least one part number or equipment type.",
+    "f-sending":"Sending…","f-err-send":"Sending failed — please try again shortly, or email us directly.",
     "info-title":"Talk to our team","info-sales":"Sales & RFQ","info-aog":"AOG / critical desk",
     "info-addr":"Address","info-hours":"Hours",
     "info-hours-v":"Mon–Fri 09:00–18:00 (HKT) · AOG desk always on",
@@ -87,8 +88,8 @@ const I18N = {
     "cart-note":"Note for our sales team",
     "cart-note-ph":"Delivery deadline, airport, anything we should know…",
     "cart-total":"Estimated total","cart-rfq-only":"Items marked RFQ are quoted on request.",
-    "cart-submit":"Submit RFQ","cart-ok-t":"RFQ sent",
-    "cart-ok-d":"Demo — connect this button to your email or CRM endpoint in production.",
+    "cart-submit":"Submit RFQ","cart-ok-t":"Almost done",
+    "cart-ok-d":"Your list was copied to the enquiry form — add your contact details and send.",
     "cart-remove":"Remove",
     "cd-add":"Add to RFQ","cd-fit":"Fits","cd-view-aria":"Quick view",
     "cond-new":"New","cond-svc":"Serviceable","cond-oh":"Overhauled","cond-all":"All conditions",
@@ -165,10 +166,11 @@ const I18N = {
     "rfq-sub":"話我知零件編號或設備型號 — 一個工作天內回覆，AOG 即時處理。",
     "f-name":"姓名 *","f-company":"公司","f-email":"電郵 *","f-phone":"電話",
     "f-msg":"零件編號 / 設備 *","f-send":"發送詢價",
-    "f-note":"示範表格 — 資料唔會離開你嘅瀏覽器。上線時接駁電郵端點即可。",
+    "f-note":"一個工作天內回覆 — AOG 優先處理。",
     "f-ok-t":"已收到詢價",
-    "f-ok-d":"多謝 — 此為示範，無實際發送。正式版會由銷售團隊於一個工作天內回覆。",
+    "f-ok-d":"多謝 — 銷售團隊已收到你嘅查詢，一個工作天內回覆（AOG 即時處理）。",
     "f-err-name":"請填寫姓名。","f-err-email":"請填寫有效電郵地址。","f-err-msg":"請列出至少一項零件編號或設備型號。",
+    "f-sending":"發送中…","f-err-send":"發送失敗 — 請稍後再試，或直接電郵我哋。",
     "info-title":"聯絡我哋團隊","info-sales":"銷售及詢價","info-aog":"AOG 緊急熱線",
     "info-addr":"地址","info-hours":"辦公時間",
     "info-hours-v":"週一至五 09:00–18:00 (HKT) · AOG 熱線全日",
@@ -179,8 +181,8 @@ const I18N = {
     "cart-note":"俾銷售團隊嘅備註",
     "cart-note-ph":"交貨死線、機場、其他需要知道嘅事…",
     "cart-total":"預估總額","cart-rfq-only":"標示 RFQ 嘅項目另行報價。",
-    "cart-submit":"發送詢價","cart-ok-t":"詢價已發送",
-    "cart-ok-d":"示範 — 上線時將此按鈕接駁到電郵或 CRM 端點。",
+    "cart-submit":"發送詢價","cart-ok-t":"最後一步",
+    "cart-ok-d":"你嘅清單已複製到查詢表格 — 填返聯絡資料再發送。",
     "cart-remove":"移除",
     "cd-add":"加入詢價","cd-fit":"適用","cd-view-aria":"快速檢視",
     "cond-new":"全新","cond-svc":"可用品","cond-oh":"大修件","cond-all":"所有狀態",
@@ -1015,16 +1017,29 @@ function goHero(q){
   location.hash = "#parts";
 }
 
-/* ---------------- RFQ form ---------------- */
+/* ---------------- RFQ form (FormSubmit email backend) ---------------- */
+const RFQ_ENDPOINT = "https://formsubmit.co/ajax/alma.leung613@gmail.com";
+
+function cartItemsText(){
+  const lines = [];
+  cart.forEach((qty, pn) => {
+    const p = partByPn(pn);
+    if(p) lines.push(qty + "x " + p.pn + " — " + p.nm + (p.price !== null ? " (" + fmtPrice(p.price) + ")" : ""));
+  });
+  return lines.join("\n");
+}
+
 function initForms(){
   const form = $("#rfqForm");
+  const sendBtn = $("#rfqSend");
   const setErr = (inputId, errId, msg) => {
     const err = $(errId);
     err.textContent = msg || "";
     $(inputId).closest(".field").classList.toggle("invalid", !!msg);
   };
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if($("#fHoney").value) return;  // honeypot filled = bot; silently drop
     const name = $("#cName").value.trim();
     const email = $("#cEmail").value.trim();
     const msg = $("#cMsg").value.trim();
@@ -1033,18 +1048,39 @@ function initForms(){
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){ setErr("#cEmail","#eEmail",t("f-err-email")); ok = false; } else setErr("#cEmail","#eEmail","");
     if(!msg){ setErr("#cMsg","#eMsg",t("f-err-msg")); ok = false; } else setErr("#cMsg","#eMsg","");
     if(!ok) return;
-    form.reset();
-    form.hidden = true;
-    $("#formOk").hidden = false;
+    const items = $("#rfqItems").value;
+    const msgField = form.querySelector('[name=message]');
+    if(items) msgField.value = msg + "\n\n— RFQ list —\n" + items;
+    form.querySelector('[name=_replyto]').value = email;
+    sendBtn.disabled = true;
+    const origLabel = sendBtn.textContent;
+    sendBtn.textContent = t("f-sending");
+    try {
+      const resp = await fetch(RFQ_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(Object.fromEntries(new FormData(form)))
+      });
+      if(!resp.ok) throw new Error("HTTP " + resp.status);
+      form.reset();
+      cart.clear(); renderCart();
+      form.hidden = true;
+      $("#formOk").hidden = false;
+    } catch(err) {
+      setErr("#cMsg","#eMsg",t("f-err-send"));
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.textContent = origLabel;
+    }
   });
 
   $("#cartSubmit").addEventListener("click", () => {
-    $("#cartFoot").hidden = true;
-    $("#cartList").textContent = "";
-    cart.clear();
-    renderCart();
-    const ok = $("#cartOk");
-    ok.hidden = false;
+    const items = cartItemsText();
+    if(!items) return;
+    const note = $("#cartNote").value.trim();
+    $("#rfqItems").value = items + (note ? "\n— Note —\n" + note : "");
+    $("#cartOk").hidden = false;
+    location.hash = "#contact";
   });
 }
 
