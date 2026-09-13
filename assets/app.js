@@ -1061,7 +1061,8 @@ function initForms(){
         headers: { "Content-Type": "application/json", "Accept": "application/json" },
         body: JSON.stringify(Object.fromEntries(new FormData(form)))
       });
-      if(!resp.ok) throw new Error("HTTP " + resp.status);
+      const data = await resp.json().catch(() => ({}));
+      if(!resp.ok || data.success !== "true") throw new Error(data.message || ("HTTP " + resp.status));
       form.reset();
       cart.clear(); renderCart();
       form.hidden = true;
