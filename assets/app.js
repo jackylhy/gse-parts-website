@@ -1018,7 +1018,7 @@ function goHero(q){
 }
 
 /* ---------------- RFQ form (FormSubmit email backend) ---------------- */
-const RFQ_ENDPOINT = "https://formsubmit.co/ajax/alma.leung613@gmail.com";
+const RFQ_ENDPOINT = "https://formsubmit.co/ajax/sales@gse-spares.com";
 
 function cartItemsText(){
   const lines = [];
