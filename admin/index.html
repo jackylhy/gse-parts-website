@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>管理員登入 — AeroGround Parts</title>
+<style>
+  :root { --blue:#1273c4; --blue-dk:#0b5aa5; --navy:#0e2a47; --bg:#f4f9fd; --line:#dce9f5; --ok:#1a7f4b; --err:#b3261e; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,"PingFang HK","Microsoft JhengHei",sans-serif; background:var(--bg); color:#183247; min-height:100vh; }
+  header { background:var(--navy); color:#fff; padding:14px 24px; display:flex; justify-content:space-between; align-items:center; }
+  header .brand { font-weight:700; letter-spacing:.3px; }
+  header .brand small { display:block; font-weight:400; font-size:12px; opacity:.75; }
+  header a { color:#bcd8f2; font-size:13px; text-decoration:none; }
+  main { max-width:1100px; margin:0 auto; padding:32px 20px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:14px; box-shadow:0 4px 18px rgba(18,115,196,.07); }
+  /* login */
+  .login-wrap { max-width:420px; margin:9vh auto 0; }
+  .login-card { padding:36px 32px; text-align:center; }
+  .login-card .lock { font-size:44px; }
+  .login-card h1 { font-size:21px; margin:12px 0 4px; color:var(--navy); }
+  .login-card p { font-size:13px; color:#5c7891; margin-bottom:22px; }
+  .login-card input { width:100%; padding:12px 14px; font-size:15px; border:1.5px solid var(--line); border-radius:9px; outline:none; }
+  .login-card input:focus { border-color:var(--blue); }
+  .btn { display:inline-block; border:0; cursor:pointer; font-size:15px; font-weight:600; border-radius:9px; padding:12px 22px; }
+  .btn-primary { background:var(--blue); color:#fff; width:100%; margin-top:14px; }
+  .btn-primary:hover { background:var(--blue-dk); }
+  .btn-primary:disabled { background:#9dbdd9; cursor:wait; }
+  .msg { margin-top:14px; font-size:13.5px; min-height:18px; }
+  .msg.err { color:var(--err); }
+  /* dashboard */
+  #dash { display:none; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; margin-bottom:22px; }
+  .stat { padding:18px 20px; }
+  .stat .k { font-size:12.5px; color:#5c7891; }
+  .stat .v { font-size:26px; font-weight:700; color:var(--navy); margin-top:4px; }
+  .bar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
+  .bar input[type=search] { flex:1; min-width:240px; padding:11px 14px; font-size:14.5px; border:1.5px solid var(--line); border-radius:9px; outline:none; }
+  .bar input[type=search]:focus { border-color:var(--blue); }
+  .meta { font-size:12.5px; color:#5c7891; }
+  .tbl-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  th { text-align:left; background:#eaf3fb; color:var(--navy); padding:10px 12px; border-bottom:2px solid var(--line); white-space:nowrap; }
+  th.num, td.num { text-align:right; }
+  td { padding:9px 12px; border-bottom:1px solid var(--line); }
+  td.pn { font-weight:600; color:var(--blue-dk); white-space:nowrap; }
+  td.desc { color:#3d5a73; }
+  tr.zero td { background:#fdf3f2; }
+  .zero-badge { display:inline-block; font-size:11px; background:var(--err); color:#fff; border-radius:5px; padding:1px 6px; margin-left:6px; }
+  .hint { text-align:center; color:#5c7891; font-size:13.5px; padding:26px 0 10px; }
+  .btn-ghost { background:#fff; border:1.5px solid var(--line); color:var(--navy); font-size:13.5px; padding:9px 16px; }
+  .btn-ghost:hover { border-color:var(--blue); color:var(--blue-dk); }
+  footer { text-align:center; font-size:12px; color:#8aa5bd; padding:26px 0 34px; }
+  @media (max-width:560px){ th,td{padding:8px 8px;font-size:12.5px;} .stat .v{font-size:21px;} }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">AeroGround Parts<small>gse-spares.com</small></div>
+  <a href="/">← 返回主站</a>
+</header>
+
+<main>
+  <div id="login" class="login-wrap">
+    <div class="card login-card">
+      <div class="lock">🔒</div>
+      <h1>管理員登入</h1>
+      <p>內部庫存／成本數據僅限授權人士</p>
+      <input id="pw" type="password" placeholder="管理員密碼" autocomplete="current-password">
+      <button id="go" class="btn btn-primary">登入</button>
+      <div id="lmsg" class="msg"></div>
+    </div>
+  </div>
+
+  <div id="dash">
+    <div class="stats">
+      <div class="card stat"><div class="k">SKU 總數</div><div class="v" id="s-sku">–</div></div>
+      <div class="card stat"><div class="k">庫存總件數</div><div class="v" id="s-qty">–</div></div>
+      <div class="card stat"><div class="k">庫存總值</div><div class="v" id="s-val">–</div></div>
+      <div class="card stat"><div class="k">冇貨 SKU</div><div class="v" id="s-zero">–</div></div>
+    </div>
+    <div class="bar">
+      <input id="q" type="search" placeholder="搜尋零件號／描述…">
+      <span class="meta" id="meta"></span>
+      <button id="logout" class="btn btn-ghost">登出</button>
+    </div>
+    <div class="card tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Part No.</th><th>描述</th><th class="num">倉位</th>
+          <th class="num">數量</th><th>單位</th>
+          <th class="num">均價</th><th class="num">總值</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="hint" id="hint">輸入關鍵字搜尋零件（零件號或描述）</div>
+    </div>
+  </div>
+</main>
+<footer>內部管理頁面 · 數據同步時間見上方 · <span id="syncat"></span></footer>
+
+<script>
+const API = 'https://admin-api.jackylhy-spares.workers.dev';
+const LS = 'gse_admin_auth';
+let STOCK = null;
+
+const $ = id => document.getElementById(id);
+const auth = () => { try { return JSON.parse(localStorage.getItem(LS) || 'null'); } catch (e) { return null; } };
+const valid = a => a && a.token && a.exp && Date.now() / 1000 < a.exp;
+
+async function api(path, opts = {}) {
+  const a = auth();
+  const headers = Object.assign({'Content-Type': 'application/json'}, opts.headers || {});
+  if (valid(a)) headers['Authorization'] = 'Bearer ' + a.token;
+  return fetch(API + path, Object.assign({}, opts, {headers}));
+}
+
+function logout() { localStorage.removeItem(LS); location.reload(); }
+
+function failAuth() { localStorage.removeItem(LS); $('dash').style.display = 'none'; $('login').style.display = 'block'; }
+
+async function loadData() {
+  const r = await api('/data');
+  if (r.status === 401) { failAuth(); return false; }
+  const j = await r.json();
+  if (!j.ok) { failAuth(); return false; }
+  STOCK = j.stock;
+  $('syncat').textContent = '同步於 ' + j.syncedAt;
+  renderStats();
+  return true;
+}
+
+function renderStats() {
+  let qty = 0, val = 0, zero = 0;
+  for (const p of Object.values(STOCK)) { qty += p.qty || 0; val += p.total_val || 0; if (!p.qty) zero++; }
+  $('s-sku').textContent = Object.keys(STOCK).length.toLocaleString();
+  $('s-qty').textContent = qty.toLocaleString();
+  $('s-val').textContent = Math.round(val).toLocaleString();
+  $('s-zero').textContent = zero.toLocaleString();
+}
+
+function render(q) {
+  const tbody = $('rows');
+  tbody.innerHTML = '';
+  if (!q || q.length < 2) { $('hint').style.display = 'block'; $('hint').textContent = '輸入關鍵字搜尋零件（零件號或描述）'; return; }
+  const ql = q.toLowerCase();
+  const hits = [];
+  for (const [pn, p] of Object.entries(STOCK)) {
+    if (pn.toLowerCase().includes(ql) || (p.desc || '').toLowerCase().includes(ql)) hits.push([pn, p]);
+    if (hits.length >= 300) break;
+  }
+  hits.sort((a, b) => (a[1].qty ? 1 : 0) - (b[1].qty ? 1 : 0) || (b[1].total_val || 0) - (a[1].total_val || 0));
+  for (const [pn, p] of hits) {
+    const tr = document.createElement('tr');
+    if (!p.qty) tr.className = 'zero';
+    tr.innerHTML = '<td class="pn">' + pn + (!p.qty ? '<span class="zero-badge">冇貨</span>' : '') + '</td>'
+      + '<td class="desc">' + (p.desc || '') + '</td>'
+      + '<td class="num">' + (p.n_bins ?? '–') + '</td>'
+      + '<td class="num">' + (p.qty ?? '–') + '</td>'
+      + '<td>' + (p.uom || '') + '</td>'
+      + '<td class="num">' + (p.avg_price != null ? p.avg_price.toLocaleString() : '–') + '</td>'
+      + '<td class="num">' + (p.total_val != null ? Math.round(p.total_val).toLocaleString() : '–') + '</td>';
+    tbody.appendChild(tr);
+  }
+  $('hint').style.display = 'none';
+  $('meta').textContent = hits.length ? hits.length + ' 個結果' + (hits.length >= 300 ? '（顯示首 300）' : '') : '無結果';
+}
+
+async function doLogin() {
+  const pw = $('pw').value;
+  if (!pw) return;
+  $('go').disabled = true;
+  $('lmsg').className = 'msg'; $('lmsg').textContent = '';
+  try {
+    const r = await fetch(API + '/login', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({password: pw})});
+    const j = await r.json();
+    if (!j.ok) { $('lmsg').className = 'msg err'; $('lmsg').textContent = '密碼錯誤'; return; }
+    localStorage.setItem(LS, JSON.stringify({token: j.token, exp: j.exp}));
+    $('login').style.display = 'none';
+    $('dash').style.display = 'block';
+    if (!await loadData()) { $('lmsg').className = 'msg err'; $('lmsg').textContent = '載入數據失敗'; }
+  } catch (e) {
+    $('lmsg').className = 'msg err'; $('lmsg').textContent = '網絡錯誤，請重試';
+  } finally { $('go').disabled = false; }
+}
+
+$('go').addEventListener('click', doLogin);
+$('pw').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+$('logout').addEventListener('click', logout);
+$('q').addEventListener('input', e => render(e.target.value.trim()));
+
+// auto-resume: 有效 token 直接入 dashboard
+(async () => {
+  if (valid(auth())) {
+    $('login').style.display = 'none';
+    $('dash').style.display = 'block';
+    if (!await loadData()) { $('login').style.display = 'block'; $('dash').style.display = 'none'; }
+  }
+})();
+</script>
+</body>
+</html>
