@@ -838,6 +838,8 @@ function renderParts(){
   });
   $("#resultCount").textContent = t("result-count").replace("{n}", list.length);
   $("#emptyState").hidden = list.length !== 0;
+  /* first-screen photos: eager (headless/native lazy can miss); rest lazy */
+  [...grid.querySelectorAll("article.part-card img")].slice(0, 12).forEach(im => { im.loading = "eager"; });
 }
 
 /* ---------------- quick view ---------------- */
