@@ -1,5 +1,5 @@
 /* ============================================================
-   AeroGround Parts — catalog app (live catalog data — 294 in-stock SKUs w/ verified photos)
+   GSE Spares — catalog app (live catalog data — 294 in-stock SKUs w/ verified photos)
    Security notes:
    - Zero network requests (CSP connect-src 'none').
    - All dynamic text rendered via textContent — no innerHTML

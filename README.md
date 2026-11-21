@@ -1,4 +1,4 @@
-# AeroGround Parts — GSE 零件網站模板
+# GSE Spares — GSE 零件網站模板
 
 機場地勤設備 (GSE) 零件銷售網站前台模板。**純靜態 HTML/CSS/JS，零外部依賴、零網絡請求。**
 
@@ -58,7 +58,7 @@ gse-parts-website/
 
 ## 上線前 TODO
 
-1. 換公司名（搜尋 `AeroGround Parts`）、聯絡資料、證書
+1. ~~換公司名~~ 公司名已定＝**GSE Spares**（跟網址 gse-spares.com，2026-11-21 拍板）；換聯絡資料、證書
 2. 換真零件照片（放 `assets/`，同源引用）
 3. RFQ 表單接後端（目前 demo 提交後只顯示成功訊息）
 4. 依 SECURITY.md 設定伺服器 headers
